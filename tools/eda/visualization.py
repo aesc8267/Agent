@@ -3,7 +3,6 @@ from smolagents.tools import Tool
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 class bar(Tool):
     name = "bar"
     description = "Creates a bar graph from the given data.and the final image is saved in the images folder.the filename and the axes of the graph is returned."
