@@ -1,0 +1,234 @@
+进行数据分析，首先我们要知道python会用到的库：Pandas库、Matplotlib库。
+
+
+
+数据分析的基本过程分为：提出问题、理解数据、数据清洗、构建模型、数据可视化。
+
+（1）提出问题：明确分析的目的；
+
+（2）理解数据：主要从数据的采集、导入、查看数据的描述统计信息等方面对数据有基本了解；
+
+（3）数据清洗：主要有6个步骤：选择子集、列名重命名、缺失数据处理、数据类型转换、数据排序、异常值处理；
+
+（4）构建模型：
+
+（5）数据可视化：
+
+接下来我们以朝阳医院2016年的销售数据作为样本，进行简单的数据分析。
+
+
+
+一、提出问题：
+
+拿到这组数据，首先我们要明确分析的目的，我们是想知道以下数据：客户的月均消费次数；客户的月均消费金额；客单价；客户的消费趋势。
+
+
+
+二、理解数据，对数据有大体认知
+
+首先导入会用到的库。
+
+import pandas as pd
+import matplotlib.pyplot as plt
+然后载入数据。首次读取excel文件，需要安装xlrd库。
+
+在pandas中，常用的载入函数是read_csv、read_excel和read_table，table可以读取txt。若是服务器相关的部署，则还会用到read_sql，直接访问数据库，但它必须配合mysql相关包。
+
+sales=pd.read_excel('C:\\Users\\test data\\朝阳医院2016年销售数据.xlsx',dtype='object')
+接下来查看数据概览。以下代码列出了数据的各个字段名，共6577行，7列，6577 non-null 说明各字段没有空值,’社保账号‘有5个空值,object说明类型均为object。
+
+print(sales.info())   
+
+若需要查看文件有多少行多少列，可用以下代码：
+
+print(sales.shape)
+
+查看文件的部分数据，用head函数显示头部数据，默认5行，可自由设置参数。如果是尾部数据，可用tail函数。
+
+print(sales.head())
+
+
+
+三、数据清洗
+
+（1）选择子集：
+
+若数据量较大，且不是每行/列信息都有用，可针对性的选择子集进行分析。可用ix函数， 它通过DataFrame的索引和轴标签选择行或列的子集，代码形式为：
+
+subsales=sales.ix[:,:]
+因为数据本身不多，此处不再取子集。
+
+（2）列名重命名：
+
+将'购药时间'改为’销售时间‘，利用inplace=True可直接在原数据框内改动
+
+sales.rename(columns={'购药时间':'销售时间'},inplace=True)
+再次显示文件信息，查看是否列名是否已经修改。
+
+print(sales.head())
+
+（3）缺失数据处理：删除销售数据和社保卡号为空的行。
+
+有两种办法：①删除缺失数据（dropna方法）；② 填充缺失数据（filina方法）。
+
+此处使用dropna直接删除缺失数据。
+
+dropna默认丢弃任何含有缺失值的行，即dropna()等价于dropna(axis=0,how='any')；
+
+若要丢弃列，则axis=1;how 参数可选的值为 any 或者 all，若要丢弃全为NA的行/列，则how='all';
+
+dropna还有一个参数-thresh，该参数的类型为整数，它的作用是，比如
+thresh=3，会在一行中至少有 3 个非 NA
+值时将其保留。dropna(axis=1,thresh=1),保留至少有1个非NA值的列。还可以通过dropna的参数subset移除指定列为空的数据。
+
+此处代码为：
+
+sales=sales.dropna(subset=['销售时间','社保卡号'],how='any')
+（4）数据类型处理：
+
+因导入时均以‘object’类型导入，为便于计算，需要做类型转换。
+
+sales['销售数量']=sales['销售数量'].astype('float')
+sales['应收金额']=sales['应收金额'].astype('float')
+sales['实收金额']=sales['实收金额'].astype('float')
+print('转换后的数据类型为：\n',sales.dtypes)
+
+销售时间列格式现在为‘2016-01-01 星期五’，需先把日期和星期切分，然后转换为时间类型。
+
+此处介绍2种办法：
+
+①
+
+sales['销售时间'], sales['销售星期'] = sales['销售时间'].str.split(' ', 1).str
+切分好之后，把销售时间变为时间类型。以下代码中，erros='coerce'如果原始数据不符合日期的格式，转换后的值会变为NAT。format是原始数据的日期格式。
+
+sales.ix[:,'销售时间']=pd.to_datetime(sales.ix[:,'销售时间'],format='%Y-%m-%d',errors='coerce')
+print(sales.dtypes)
+
+②
+
+def split_time(t):
+t=t.split(' ',1)[0]
+return t
+sales['销售时间-格式化']=sales['销售时间'].apply(split_time)
+sales['销售时间-格式化']=pd.to_datetime(sales['销售时间-格式化'],format='%Y-%m-%d',errors='coerce')
+print(sales.dtypes)
+此处采用的方法一。
+
+在转换过程中，可能会出现不符合日期格式的数值会转换为空值：这时删除缺失数据
+
+sales=sales.dropna(subset=['销售时间','社保卡号'],how='any')
+（5）排序
+
+时间一列现在是无序排列的，需要排序一下，排序之后索引会被打乱，所以也需要重置一下索引。
+
+如下为按照销售日期进行升序排列，代码中，对数据按照时间排序，by:按那几列排序；ascending=True 表示升序排列；ascending=False表示降序排列。
+
+sales=sales.sort_values(by='销售时间',ascending=True) 
+print('排序后的数据集为：\n',sales.head())
+
+排序之后再重置一下index。其中代码中drop=True会舍弃原有的index，drop默认等于’Fales‘，保留原索引，增加一列新的索引。
+
+sales=sales.reset_index(drop=True) 
+print(sales.head())
+
+6、异常值处理
+
+排序后，查看每一列的描述统计信息
+
+print(sales.describe())
+
+销售数量不可能小于0。所以需去除小于0的值。
+
+sales=sales.ix[sales.销售数量>0,:] 
+或者这样写：
+
+sales=sales[(sales['销售数量']>0)&(sales['应收金额']>0)&(sales['实收金额']>0)]
+然后打印结果看下是否还有异常值：
+
+print(sales.describe())
+
+完成上述步骤，基本的数据清洗工作完成，接下来对数据进行分析。
+
+
+
+四、构建模型
+
+现在针对最开始提出的问题，运用不同的分析方法进行解决。
+
+（1）月均消费次数：等于总消费次数 / 月份数
+
+在此约定，总消费次数：同一天内，同一个人发生的所有消费算作一次消费。
+根据列名（销售时间，社区卡号），如果这两个列值同时相同，只保留一条，将重复的数据删除。
+总消费次数如下，即subsales有多少行信息：
+
+subsales=sales.drop_duplicates(subset=['销售时间','社保卡号'])
+total=subsales.shape[0]  
+print(total)
+
+计算月份数
+
+month=(subsales['销售时间'].max()-subsales['销售时间'].min()).days//30
+计算月均消费次数
+
+t1=total/month
+print('月均消费次数为：','%.2f'%t1)
+
+（2） 月均消费金额：等于总消费金额/月份数。在计算总金额的时候不能去重，需要都计算上金额。
+
+total1=sales['实收金额'].sum()
+t2=total1/month
+print('月均消费金额为：','%.2f'%t2)
+
+（3） 客单价：等于总消费金额/总消费次数
+
+total1为总消费金额；total为总消费次数
+
+t3=total1/total
+print('客单价为：','%.2f'%t3)
+
+（4）消费趋势
+
+要了解消费趋势，我们先根据时间的不同，了解下消费金额的大体变化。
+
+需要对去重后的数据按照天进行重新采样，首先要把索引变成时间：
+
+sales.index = pd.DatetimeIndex(sales['销售时间'])
+
+
+以下为按日采样：
+
+salesdays=sales.resample('D').count()     
+#count（）会对取样的数据按行进行计数
+salesdays.plot(x=salesdays.index,y='实收金额')
+plt.xlabel('Time')
+plt.ylabel('Money')
+plt.title('sales volume-day')
+plt.show()
+
+这样我们对每天的消费数据有一个大体的掌握，然后按月采样看下每个月的总销售额是否有很大的差异。
+
+
+
+以下为按月采样：
+
+salesm = sales.resample('M').sum()   
+#sum()会为取样的数值数据按月进行求和，打印出来如下：
+print(salesm.head())
+
+salesm.plot(x = salesm.index, y = '实收金额')
+plt.xlabel('Time')
+plt.ylabel('month')
+plt.title('sales voume(month)')
+plt.show()
+
+了解下月均的客流量
+
+salesm = sales.resample('M').count()
+salesm.plot(x = salesm.index, y = '实收金额')
+plt.xlabel('Time')
+plt.ylabel('people')
+plt.title('passager flow(month)')
+plt.show() 
+
+这时候可以看出，医院的销售总额和客流量基本成正比。但六月数据较异常，可能该月份人均客单价提升所致。具体问题还需在具体分析。以上仅提供分析思路参考。

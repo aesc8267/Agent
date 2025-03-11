@@ -1,0 +1,175 @@
+Matplotlib这个绘图module--数据的可视化（不就是画个图嘛，“可视化“，应该叫dashboard）
+从以往的认知中，猜想这个module到底应该是做什么的？绘图，什么是绘图，赫然让想起了小学老师教导的“点动成线，线动成面”。小学学习的柱状图，饼图，想matplotlib也应该是做这样的事情的。
+
+绘制折线图
+import matplotlib.pyplot as plt
+x = [1,2,3,4,5]
+y = [1,4,9,16,25]
+plt.plot(x,y)
+
+plt.title("Square Numbers")
+plt.xlabel("Value")
+plt.ylabel("Square of Value")
+
+plt.show()
+
+这和传说中的helloworld有异曲同工之妙啊。这与print("hello world")有什么大致的区别的吗？既然知道了折线图的画法，不妨大胆一些，那些使用坐标的绘图是不是替换一下plot这个方法呢？不妨试一下。
+
+绘制柱状图
+
+使用bar这个方法
+​
+绘制散点图
+
+还是替换了一个方法而已
+接下来要思考一个问题了，就是plot函数，bar函数，scatter函数。处理的是两个list。
+
+当我意识这几个函数是并行计算的时候，我瞬间不知道并行计算如何处理x,y这两个list了。瞬间我就意识到这并不是并行执行了。应该是先处理x，然后处理y。
+
+推导出来的步骤：
+
+根据x的数量以及最大值，绘制x坐标
+根据y的数量以及最大值，绘制y的坐标
+在x轴标注投影坐标
+在画布标注坐标的位置
+绘制饼图
+import matplotlib.pyplot as plt
+
+# 数据
+labels = ['A', 'B', 'C', 'D']
+sizes = [15, 30, 45, 10]
+
+# 饼图设置
+fig1, ax1 = plt.subplots()
+ax1.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
+
+# 等轴比例
+ax1.axis('equal')
+
+# 显示图形
+plt.show()
+
+什么是饼图，姑且只能知道的是饼图是显示数据量和百分比的关系。更甚的理解大可不必思考。图表的意义在于更加直观地明白产品的本质。而不是将让本来简单的事物变得复杂。
+
+绘制热力图
+import matplotlib.pyplot as plt
+import numpy as np
+
+# 生成随机数据
+data = np.random.rand(10, 10)
+
+# 绘制热力图
+plt.imshow(data, cmap='hot', interpolation='nearest')
+plt.colorbar()
+plt.show()
+
+绘制等高线图
+import matplotlib.pyplot as plt
+import numpy as np
+
+# 创建数据
+x = np.linspace(-5, 5, 100)
+y = np.linspace(-5, 5, 100)
+X, Y = np.meshgrid(x, y)
+Z = np.sin(np.sqrt(X**2 + Y**2))
+
+# 绘制等高线图
+plt.contour(X, Y, Z, levels=20, cmap='RdGy')
+plt.colorbar()
+
+# 添加标题和标签
+plt.title('Contour Plot')
+plt.xlabel('X')
+plt.ylabel('Y')
+
+# 显示图形
+plt.show()
+
+绘制直方图
+import matplotlib.pyplot as plt
+import numpy as np
+
+# 生成随机数据
+data = np.random.normal(0, 1, 1000)
+
+# 绘制直方图
+plt.hist(data, bins=30, edgecolor='black')
+
+# 添加标题和坐标轴标签
+plt.title('Histogram of Random Data')
+plt.xlabel('Value')
+plt.ylabel('Frequency')
+
+# 显示图形
+plt.show()
+
+​
+绘制雷达图
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 数据
+labels = ['A', 'B', 'C', 'D', 'E']
+data = [4, 5, 7, 3, 6]
+
+# 计算角度
+angles = np.linspace(0, 2*np.pi, len(labels), endpoint=False)
+angles = np.concatenate((angles, [angles[0]]))
+
+# 绘图
+fig = plt.figure()
+ax = fig.add_subplot(111, polar=True)
+ax.plot(angles, data, 'o-', linewidth=2)
+ax.fill(angles, data, alpha=0.25)
+
+# 设置雷达图的标签
+ax.set_thetagrids(angles[:-1] * 180/np.pi, labels)
+
+# 设置极径范围
+ax.set_ylim([0, 8])
+
+# 显示图形
+plt.show()
+
+
+绘制动态图
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+
+# 创建一个空的图像对象
+fig, ax = plt.subplots()
+
+x = np.linspace(0, 2*np.pi, 200)
+y = np.sin(x)
+line, = ax.plot(x, y)
+
+def update(frame):
+    line.set_ydata(np.sin(x + frame/10))
+    return line,
+
+
+ani = FuncAnimation(fig, update, frames=range(200), interval=20)
+
+
+# 显示动画
+plt.show()
+绘制3D图形
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+# 生成数据
+x = np.random.randn(100)
+y = np.random.randn(100)
+z = np.random.randn(100)
+
+# 绘制3D散点图
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(x, y, z, c='r', marker='o')
+ax.set_xlabel('X Label')
+ax.set_ylabel('Y Label')
+ax.set_zlabel('Z Label')
+plt.show()
+
+

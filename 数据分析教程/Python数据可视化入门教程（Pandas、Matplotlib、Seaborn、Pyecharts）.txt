@@ -1,0 +1,389 @@
+什么是数据可视化？ 数据可视化是为了使得数据更高效地反应数据情况，便于让读者更高效阅读，通过数据可视化突出数据背后的规律，以此突出数据中的重要因素，如果使用Python做数据可视化，建议学好如下这四个Python数据分析包，分别是：
+
+Pandas、Matplotlib、Seaborn、Pyecharts
+
+学好以上四个数据分析包，做可视化足够用了，全文较长，建议耐心看完，学习后即可使用Python做数据可视化，具体的代码实操部分可以实际用代码进行演示，这样才能更好的掌握，下面一起来学习~
+
+
+
+01. Pandas
+官网https://www.pypandas.cn/
+
+Pandas 是 Python的核心数据分析支持库，提供了快速、灵活、明确的数据结构，旨在简单、直观地处理关系型、标记型数据，广泛应用于数据分析领域，Pandas 适用于处理与 Excel 表类似的表格数据，以及有序和无序的时间序列数据等。
+
+Pandas 的主要数据结构是 Series（一维数据）和 DataFrame（二维数据），这两种数据结构足以处理金融、统计、社会科学、工程等领域里的大多数典型用例，使用pandas进行数据分析流程包含数据整理与清洗、数据分析与建模、数据可视化与制表等阶段。
+
+灵活的分组功能：group by数据分组；
+
+直观地合并功能：merge数据连接；
+
+灵活地重塑功能：reshape数据重塑；
+
+
+
+pandas库不仅可以做一些数据清洗的工作，还可以使用pandas作图，并且做图时，使用一行代码就可以轻松作图，详细的作图方法可以看代码中的注释。
+
+#导入pandas库  
+import pandas as pd    
+#生成一个Series  
+s=pd.Series([1,3,3,4], index=list('ABCD'))    
+
+#括号内不指定图表类型，则默认生成直线图  
+s.plot()
+
+
+#条形图
+s.plot(kind='bar')
+
+
+#水平条形图   
+s.plot.barh()
+
+
+#饼图   
+s.plot.pie()
+
+
+#直方图   
+s.plot.hist()
+
+
+#密度图   
+import numpy as np 
+
+s=pd.Series(np.random.randn(1000))  #生成一列随机数   
+s.plot.kde()   
+s.plot.density()
+
+#散点图   
+import numpy as np 
+#生成一个DataFrame  
+df=pd.DataFrame(np.random.randn(1000,2),
+                 columns=['X1','Y'])
+df.plot.scatter(x='X1',y='Y')
+
+
+#六角箱图   
+df.plot.hexbin(x='X1',y='Y',gridsize=8)
+
+
+#箱型图
+df=pd.DataFrame(np.random.rand(10,2),columns=['A','B'])
+df.plot.box()
+
+#面积图
+df=pd.DataFrame(np.random.randint(10,size=(4,4)),
+                 columns=list('ABCD'),
+                 index=list('WXYZ'))    
+
+df.plot.area()
+
+02. Matplotlib
+官网https://www.matplotlib.org.cn/
+
+Matplotlib是一个Python 2D绘图库，它以多种硬拷贝格式和跨平台的交互式环境生成出版物质量的图形。Matplotlib可用于Python脚本，Python和IPython Shell、Jupyter笔记本，Web应用程序服务器和四个图形用户界面工具包。
+
+Matplotlib 尝试使容易的事情变得更容易，使困难的事情变得可能，只需几行代码就可以生成图表、直方图、功率谱、条形图、误差图、散点图等。
+
+为了简单绘图，该 pyplot 模块提供了类似于MATLAB的界面，尤其是与IPython结合使用时，对于高级用户，您可以通过面向对象的界面或MATLAB用户熟悉的一组功能来完全控制线型，字体属性，轴属性等。
+
+
+
+下面介绍matplotlib的用法，使用matplotlib除了可以作图外，还可以对于图表的参数做一些调整，使得图表更加美观，关于使用matplotlib的建议，可以做一些常用的图表模板，更换代码的数据源就可以生成图表，而不用一点一点的去调整参数。
+
+#导入模块  
+import matplotlib.pyplot as plt  
+
+#设置风格  
+plt.style.use('seaborn-white')  
+
+#中文显示问题，如果没有这段代码，图表不显示中文汉字   
+plt.rcParams['font.sans-serif'] =['SimHei']
+
+这里首先导入matplotlib库，并使用了seaborn-white的图表风格，可以使用plt.style.available 查看图表的风格，选择一个自己喜欢的图表风格，在图表中不能显示汉字，使用一段代码就可以显示了。
+
+
+#构建一个DataFrame 
+import pandas as pd  
+import matplotlib.pyplot as plt
+  
+df=pd.DataFrame({'X':[1,3,5,7]})  
+df['Y']=df['X']**3  
+df
+
+
+#设置图像的大小 
+plt.figure(facecolor='white',figsize=(9,6),dpi=100)  
+plt.plot(df['X'],df['Y'])
+   
+#设置图像的标题 
+plt.title('折线图',fontsize=15,color='b') 
+ 
+#设置图像的X、Y轴标题大小，颜色，与坐标轴的距离  
+plt.xlabel('X轴',fontsize=10,color='r',labelpad=15)  
+plt.ylabel('Y轴',fontsize=10,color='g',rotation=0,labelpad=15)   
+
+#设置起始坐标点 
+plt.xlim([1,8])  
+plt.ylim([1,350]) 
+#plt.xticks([1,2,3,4])只显示1,2,3,4  
+#plt.yticks([50,150,250,300])只显示50,150,250,300 
+  
+#图像的网格线进行设置 
+plt.grid(color='r', linestyle='-.')
+
+
+这里首先设置图像的大小，跟我们画画一样，选择多大的纸张去作图，一样的道理，然后设置坐标轴，起始坐标，网格线等。
+
+
+
+有时候，要在一张图表上绘制多条线。
+
+#多个图的绘图方法  
+import numpy as np  
+import matplotlib.pyplot as plt  
+
+x=np.array([1,3,5])  
+y1=x  
+y2=x * 10  
+y3=x * 20  
+y4=x * 30
+可以在一个plt.plot命令后继续加另一个plt.plot命令，可以在一张图上做另一条线。
+
+plt.figure(facecolor='white')  
+plt.plot(x,y1,label='A')  
+plt.plot(x,y2,label='B')  
+plt.plot(x,y3,label='C')  
+plt.plot(x,y4,label='D')   
+
+plt.legend()#显示图例
+
+
+使用plt.subplots命令也可以作出同样的图。
+
+#使用面向对象绘图  
+fig,ax=plt.subplots(facecolor='white')  
+plt.plot(x,y1,label='A')  
+plt.plot(x,y2,label='B')  
+plt.plot(x,y3,label='C')  
+plt.plot(x,y4,label='D')   
+
+plt.legend()#显示图例
+
+
+多表绘制
+
+下面介绍在一张图表的不同位置绘制不同的线型，使用plt.subplot命令首先确定绘图的位置，比如plt.subplot(223)表示在2*2分布的图表中第三个位置，其余的绘图命令相似。
+
+plt.figure(facecolor='white',figsize=(9,6)) 
+
+plt.subplot(221)  
+plt.plot(x,y1,label='A',color='r')  
+plt.xticks(fontsize=15)  
+plt.legend()#显示图例   
+
+plt.subplot(222)  
+plt.plot(x,y2,label='B',color='y')  
+plt.xticks(fontsize=15)  
+plt.legend()#显示图例   
+
+plt.subplot(223)  
+plt.plot(x,y3,label='C',color='b')  
+plt.xticks(fontsize=15)  
+plt.legend()#显示图例 
+  
+plt.subplot(224)  
+plt.plot(x,y4,label='D',color='g')  
+plt.xticks(fontsize=15)  
+plt.legend()#显示图例   
+
+plt.tight_layout()#密集显示
+
+
+除了使用plt.subplot命令确定绘图区域外，还可以用axs\[ \]命令绘图，这种绘图方式是面向对象的绘图方式。
+
+
+#面向对象绘制多图  
+fig,axs=plt.subplots(2,2,facecolor='white',figsize=(9,6))  
+
+axs[0,0].plot(x,y1,label='A',color='r')  
+axs[0,1].plot(x,y2,label='B',color='y')  
+axs[1,0].plot(x,y3,label='C',color='b')  
+axs[1,1].plot(x,y4,label='D',color='g')
+
+
+有时候绘制多张表时需共享一个坐标轴，可以使用sharex='all’命令。
+
+#sharex='all'共享X轴  
+fig,axs=plt.subplots(4,1,facecolor='white', figsize=(9,6), sharex='all')   
+axs[0].plot(x,y1,label='A',color='r')  
+axs[1].plot(x,y2,label='B',color='y')  
+axs[2].plot(x,y3,label='C',color='b')  
+axs[3].plot(x,y4,label='D',color='g')
+
+
+设置全局变量
+
+使用plt.rcParams命令对全局变量设置，包括字符显示、中文显示、背景颜色、标题大小、坐标轴字体大小，线型等。
+
+#导入模块  
+import matplotlib.pyplot as plt  
+
+#设置风格  
+plt.style.use('seaborn-white')  
+
+#设置全局变量  
+plt.rcParams['axes.unicode_minus'] = False #字符显示 
+plt.rcParams['font.sans-serif'] =['SimHei'] #中文显示  
+plt.rcParams['figure.facecolor'] = 'b' #设置图表背景颜色 
+plt.rcParams['axes.facecolor'] = (0.8,0.9,0.8) #设置RGB颜色  
+plt.rcParams['axes.titlesize'] = 20 #设置标题大小  
+plt.rcParams['axes.labelsize'] = 20 #设置轴大小  
+plt.rcParams['xtick.labelsize'] = 20 #设置X坐标大小  
+plt.rcParams['ytick.labelsize'] = 20 #设置Y坐标大小  
+plt.rcParams['lines.linestyle'] = '-.' #设置线型  
+
+plt.plot(x,y1,label='A')  
+plt.plot(x,y2,label='B')  
+plt.plot(x,y3,label='C')  
+plt.plot(x,y4,label='D')   
+plt.title('折线图')  
+plt.xlabel('X轴')  
+plt.ylabel('Y轴')  
+plt.legend()#显示图例
+
+
+下图就是通过设置全局变量做的图，个人觉得并不美观，对于其他图表全局变量的设置，大家可以探索，做出更好看的图表。
+
+
+
+03. Seaborn
+官网http://seaborn.pydata.org/
+
+Seaborn 是一个基于matplotlib的 Python 数据可视化库，它建立在matplotlib之上，并与Pandas数据结构紧密集成，用于绘制有吸引力和信息丰富的统计图形的高级界面。
+
+Seaborn 可用于探索数据，它的绘图功能对包含整个数据集的数据框和数组进行操作，并在内部执行必要的语义映射和统计聚合以生成信息图，其面向数据集的声明式 API可以专注于绘图的不同元素的含义，而不是如何绘制它们的细节。
+
+Matplotlib 拥有全面而强大的 API，几乎可以根据自己的喜好更改图形的任何属性，seaborn 的高级界面和 matplotlib 的深度可定制性相结合，使得Seaborn既可以快速探索数据，又可以创建可定制为出版质量最终产品的图形。
+
+
+
+绘制多行图
+
+将变量按照多行的形式进行绘制，使用sns.FacetGrid命令。
+
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+sns.set_theme(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
+
+rs = np.random.RandomState(1979)
+x = rs.randn(500)
+g = np.tile(list("ABCDEFGHIJ"), 50)
+df = pd.DataFrame(dict(x=x, g=g))
+m = df.g.map(ord)
+df["x"] += m
+
+pal = sns.cubehelix_palette(10, rot=-.25, light=.7)
+g = sns.FacetGrid(df, row="g", hue="g", aspect=15, height=.5, palette=pal)
+
+g.map(sns.kdeplot, "x",
+      bw_adjust=.5, clip_on=False,
+      fill=True, alpha=1, linewidth=1.5)
+g.map(sns.kdeplot, "x", clip_on=False, color="w", lw=2, bw_adjust=.5)
+
+g.refline(y=0, linewidth=2, linestyle="-", color=None, clip_on=False)
+
+def label(x, color, label):
+    ax = plt.gca()
+    ax.text(0, .2, label, fontweight="bold", color=color,
+            ha="left", va="center", transform=ax.transAxes)
+
+g.map(label, "x")
+
+g.figure.subplots_adjust(hspace=-.25)
+
+g.set_titles("")
+g.set(yticks=[], ylabel="")
+g.despine(bottom=True, left=True)
+
+
+绘制热力图
+
+将数据的大小用热力图进行呈现，使用sns.heatmap命令。
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set_theme()
+
+# Load the example flights dataset and convert to long-form
+flights_long = sns.load_dataset("flights")
+flights = flights_long.pivot("month", "year", "passengers")
+
+# Draw a heatmap with the numeric values in each cell
+f, ax = plt.subplots(figsize=(9, 6))
+sns.heatmap(flights, annot=True, fmt="d", linewidths=.5, ax=ax)
+
+04. Pyecharts
+官网https://pyecharts.org/#/
+
+Echarts 是一个由百度开源的数据可视化，凭借着良好的交互性，精巧的图表设计，得到了众多开发者的认可。而 Python 是一门富有表达力的语言，很适合用于数据处理。当数据分析遇上数据可视化时，pyecharts 诞生了。
+
+Pyecharts具有简洁的 API 设计，使用如丝滑般流畅，支持链式调用，囊括了 30+ 种常见图表，应有尽有，支持主流 Notebook 环境，Jupyter Notebook 和 JupyterLab，拥有高度灵活的配置项，可轻松搭配出精美的图表。
+
+Pyecharts强大的数据交互功能，使数据表达信息更加生动，增加了人机互动效果，并且数据呈现效果可直接导出为html文件，增加数据结果交互的机会，使得信息沟通更加容易。
+
+
+
+绘制地图
+
+Pyecharts有着丰富的图表素材，支持链式调用，如下是使用Pyecharts的地理图表功能，空间上直观显示数据可视化效果。
+
+from pyecharts import options as opts
+from pyecharts.charts import Map
+from pyecharts.faker import Faker
+
+c = (
+    Map()
+    .add("商家A", [list(z) for z in zip(Faker.provinces, Faker.values())], "china")
+    .set_global_opts(
+        title_opts=opts.TitleOpts(title="Map-VisualMap（分段型）"),
+        visualmap_opts=opts.VisualMapOpts(max_=200, is_piecewise=True),
+    )
+    .render("map_visualmap_piecewise.html")
+)
+
+绘制雷达图
+
+使用Radar命令绘制出雷达图，用来显示多变量数据的图形方法。
+
+from pyecharts import options as opts
+from pyecharts.charts import Radar
+
+v1 = [[4300, 10000, 28000, 35000, 50000, 19000]]
+v2 = [[5000, 14000, 28000, 31000, 42000, 21000]]
+c = (
+    Radar()
+    .add_schema(
+        schema=[
+            opts.RadarIndicatorItem(name="销售", max_=6500),
+            opts.RadarIndicatorItem(name="管理", max_=16000),
+            opts.RadarIndicatorItem(name="信息技术", max_=30000),
+            opts.RadarIndicatorItem(name="客服", max_=38000),
+            opts.RadarIndicatorItem(name="研发", max_=52000),
+            opts.RadarIndicatorItem(name="市场", max_=25000),
+        ]
+    )
+    .add("预算分配", v1)
+    .add("实际开销", v2)
+    .set_series_opts(label_opts=opts.LabelOpts(is_show=False))
+    .set_global_opts(
+        legend_opts=opts.LegendOpts(selected_mode="single"),
+        title_opts=opts.TitleOpts(title="Radar-单例模式"),
+    )
+    .render("radar_selected_mode.html")
+)
+
+
+以上介绍pandas如何绘制图表，同时引申matplotlib库的使用，并且介绍Seaborn和Pyecharts这两个数据可视化库，加以了解Python数据可视化内容，同时在数据可视化中学习多表绘制和设置全局变量，相信通过以上的学习，一定能对你学习Python数据可视化有所启发。
