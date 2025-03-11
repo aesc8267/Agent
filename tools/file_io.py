@@ -1,7 +1,6 @@
 from typing import Any, Optional
 from smolagents.tools import Tool
-
-
+import os
 class file_writer(Tool):
     name = "file_writer"
     description = "you can use this tool to write to a simple file"
@@ -16,6 +15,8 @@ class file_writer(Tool):
     output_type = "any"
 
     def forward(self, filename: str, content: str) -> Any:
+        # file_dir='./outputs'
+        # filename=os.path.join(file_dir,filename)
         with open(filename, "w") as f:
             f.write(content)
         return filename
