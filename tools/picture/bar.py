@@ -17,7 +17,7 @@ class bar(Tool):
         "legend": {"type": "string", "description": "The legend of the graph.","nullable":True},
     }
     output_type="any"
-
+    
     def forward(
         self,
         x: Union[list, np.array],
