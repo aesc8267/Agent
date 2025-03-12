@@ -1,0 +1,25 @@
+
+Exploratory Data Analysis Summary:
+
+1. **Dataset Overview**:
+   - The dataset contains 24,905 anime entries.
+   - No missing values were found in any column, indicating a clean dataset.
+
+2. **Key Observations**:
+   - The `Score` distribution shows that most anime have scores between 6 and 8.
+   - The `Type` distribution reveals that `TV` is the most common type of anime.
+   - Correlation analysis shows that `Favorites` and `Members` have a strong positive correlation (0.77), indicating that anime with more favorites tend to have more members.
+   - Segmentation analysis grouped anime based on `Score` and `Popularity`, revealing trends such as:
+     - Most anime fall into the `7-8` score range and `0-5000` popularity range.
+     - Few anime achieve high scores (`9-10`) or high popularity (`20000-25000`).
+
+3. **Visualizations**:
+   - Histogram of `Score` saved as `./temp/scores_distribution.png`.
+   - Bar chart of `Type` distribution saved as `./temp/anime_types_distribution.png`.
+   - Heatmap of the correlation matrix saved as `./temp/correlation_matrix_heatmap.png`.
+   - Heatmap of segmentation counts saved as `./temp/segmentation_heatmap.png`.
+
+4. **Summary Statistics**:
+   - Summary statistics for numerical columns saved as `./temp/summary_statistics.csv`.
+   - Correlation matrix saved as `./temp/correlation_matrix.csv`.
+   - Segmentation counts saved as `./temp/segmentation_counts.csv`.
