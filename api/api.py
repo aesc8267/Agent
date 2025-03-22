@@ -1,0 +1,218 @@
+from flask import Flask, request, jsonify
+import os
+from models import *
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, insert
+from sqlalchemy.exc import SQLAlchemyError
+
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = './uploads'
+engine = create_engine('mysql+pymysql://root:root@localhost/agent')
+DBSession = sessionmaker(bind=engine)
+
+
+# 用户注册
+@app.route('/register', methods=['POST'])
+def register():
+    db = DBSession()
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        # email = data.get('email')
+        password = data.get('password')  # 记得在生产环境中进行密码加密处理
+        new_user = Users(username=username, password=password)
+        db.add(new_user)
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        print(e)
+        return 'Error', 500
+    db.close()
+    return 'Success', 200
+
+
+# 创建智能体（agent），并可同时关联大模型和工具
+@app.route('/agents', methods=['POST'])
+def create_agent():
+    db = DBSession()
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        name = data.get('name')
+        description = data.get('description')
+        llm_id = data.get('llm_id')
+        new_agent = Agents(agent_name=name, agent_description=description, llm_id=llm_id)
+        db.add(new_agent)
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        print(e)
+        return 'Error', 500
+    try:
+        # 如果传入工具ID列表，则建立关联
+        tools = data.get('tools', [])
+        for tool_id in tools:
+            agent_tool = insert(t_agent_tools).values(agent_id=new_agent.agent_id, tool_id=tool_id)
+            db.execute(agent_tool)
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        print(e)
+        return 'Error', 500
+    return jsonify({'message': 'Agent created', 'agent_id': new_agent.agent_id}), 200
+
+
+# 获取所有工具（包含预定义和用户自定义）
+@app.route('/tools', methods=['GET'])
+def get_tools():
+    db = DBSession()
+    tools = db.query(Tools).all()
+    result = []
+    for tool in tools:
+        result.append({
+            'tool_id': tool.tool_id,
+            'name': tool.tool_name,
+            'description': tool.tool_description,
+            'inputs': tool.inputs,
+            'output_type': tool.output_type,
+            'update_time': tool.update_time
+        })
+    return jsonify(result), 200
+
+
+# 用户自定义工具上传（工具文件以 Python 文件形式上传）
+@app.route('/tools', methods=['POST'])
+def create_tool():
+    user_id = request.form.get('user_id')
+    name = request.form.get('name')
+    description = request.form.get('description')
+    # 通过表单上传的文件
+    file = request.files.get('file')
+    if file:
+        filename = file.filename
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+    else:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    new_tool = Tool(user_id=user_id, name=name, description=description, is_default=False,
+                    configuration={'file_path': file_path})
+    db.add(new_tool)
+    db.commit()
+
+    return jsonify({'message': 'Tool created', 'tool_id': new_tool.tool_id, 'file_path': file_path})
+
+
+# 获取大模型列表
+@app.route('/llm', methods=['GET'])
+def get_llm():
+    db = DBSession()
+    llms = db.query(Llms).all()
+    result = []
+    for llm in llms:
+        result.append({
+            'llm_id': llm.llm_id,
+            'llm_name': llm.llm_name,
+            'api_key': llm.api_key,
+            'base_url': llm.base_url,
+            'update_time': llm.update_time
+        })
+    return jsonify(result)
+
+
+# 创建大模型（支持用户自定义）
+@app.route('/llm', methods=['POST'])
+def create_llm():
+    data = request.get_json()
+    # user_id = data.get('user_id')
+    llm_name = data.get('name')
+    api_key = data.get('api_key')
+    base_url = data.get('base_url')
+    new_llm = Llms(llm_name=llm_name, api_key=api_key, base_url=base_url)
+    db = DBSession()
+    try:
+        db.add(new_llm)
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        print(e)
+        return 'error', 400
+    return jsonify({'message': 'LLM created', 'llm_id': new_llm.llm_id}), 200
+
+
+# 创建对话会话
+@app.route('/conversation_sessions', methods=['POST'])
+def create_conversation_session():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    agent_id = data.get('agent_id')
+    new_session = ConversationSession(user_id=user_id, agent_id=agent_id)
+    db.add(new_session)
+    db.commit()
+    return jsonify({'message': 'Conversation session created', 'session_id': new_session_id})
+
+
+# 添加对话消息
+@app.route('/conversation_messages', methods=['POST'])
+def add_conversation_message():
+    data = request.get_json()
+    session_id = data.get('session_id')
+    sender = data.get('sender')  # 'user' 或 'agent'
+    content = data.get('content')
+    file_path = data.get('file_path')  # 当消息包含文件或图片时传入文件路径
+    message_type = data.get('message_type', 'text')
+    new_message = ConversationMessage(
+        session_id=session_id,
+        sender=sender,
+        content=content,
+        file_path=file_path,
+        message_type=message_type
+    )
+    db.add(new_message)
+    db.commit()
+    return jsonify({'message': 'Message added', 'message_id': new_message.message_id})
+
+
+# 根据会话ID获取对话消息
+@app.route('/conversation_messages/<int:session_id>', methods=['GET'])
+def get_conversation_messages(session_id):
+    messages = ConversationMessage.query.filter_by(session_id=session_id).all()
+    result = []
+    for msg in messages:
+        result.append({
+            'message_id': msg.message_id,
+            'sender': msg.sender,
+            'content': msg.content,
+            'file_path': msg.file_path,
+            'message_type': msg.message_type,
+            'created_at': msg.created_at
+        })
+    return jsonify(result)
+
+
+# 用户文件上传接口（图片、CSV、其他文件）
+@app.route('/upload', methods=['POST'])
+def upload_user_file():
+    user_id = request.form.get('user_id')
+    file_type = request.form.get('file_type')  # 应为 'image', 'csv' 或 'file'
+    file = request.files.get('file')
+    if file:
+        filename = file.filename
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        new_file = UserFile(user_id=user_id, file_type=file_type, file_path=file_path)
+        db.add(new_file)
+        db.commit()
+        return jsonify({'message': 'File uploaded', 'file_id': new_file.file_id, 'file_path': file_path})
+    else:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+
+# ------------------------
+# 启动程序
+# ------------------------
+if __name__ == '__main__':
+    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+        os.makedirs(app.config['UPLOAD_FOLDER'])
+    db.create_all()  # 自动创建所有表（开发环境下使用，生产环境下建议使用数据库迁移工具）
+    app.run(debug=True)

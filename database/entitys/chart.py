@@ -5,4 +5,3 @@ class chart:
         self.chart_type = chart_type
         self.data_source = data_source
         self.create_time = create_time
-
