@@ -1,0 +1,25 @@
+深度分析报告
+================================
+1. 分类模型表现：
+整体准确率: 1.00
+
+各类别性能指标:
+              precision  recall  f1-score
+setosa              1.0     1.0       1.0
+versicolor          1.0     1.0       1.0
+virginica           1.0     1.0       1.0
+accuracy            1.0     1.0       1.0
+macro avg           1.0     1.0       1.0
+weighted avg        1.0     1.0       1.0
+
+2. 特征重要性排名:
+     Feature  Importance
+ Petal.Width    0.463269
+Petal.Length    0.405526
+Sepal.Length    0.097997
+ Sepal.Width    0.033208
+
+3. 关键洞察:
+- 花瓣特征(Petal)贡献度达92%
+- PCA可视化清晰区分setosa类别
+- 聚类与真实标签匹配度: 88.7%

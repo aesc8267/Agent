@@ -16,7 +16,7 @@ DBSession = sessionmaker(bind=engine)
 # app.config["API_DOC_AUTO_GENERATING_ARGS_MD"] = True
 # # 允许显示的方法
 # app.config["API_DOC_METHODS_LIST"] = ["GET", "POST", "PUT", "DELETE", "PATCH"]
-app.config["API_DOC_MEMBER"] = ["api"]
+app.config["API_DOC_MEMBER"] = ["database", "conversation"]
 ApiDoc(
     app,
     title="Sample App",
@@ -24,10 +24,9 @@ ApiDoc(
     description="A simple app API",
 )
 
-api = blueprints.Blueprint('api', __name__)
-
-
-@api.route('/users/register', methods=['POST'])
+database_bp = blueprints.Blueprint('database', __name__)
+conversation_bp = blueprints.Blueprint('conversation', __name__)
+@database_bp.route('/users/register', methods=['POST'])
 def register():
     """
         ### args
@@ -63,17 +62,17 @@ def register():
     return 'Success', 200
 
 
-@api.route('/users/login', methods=['POST'])
+@database_bp.route('/users/login', methods=['POST'])
 def login():
     pass
 
 
-@api.route('/users/profile', methods=['GET'])
+@database_bp.route('/users/profile', methods=['GET'])
 def get_profile():
     pass
 
 
-@api.route('/agents/add', methods=['POST'])
+@database_bp.route('/agents/add', methods=['POST'])
 def add_agent():
     """
     ### args
@@ -119,7 +118,7 @@ def add_agent():
     return jsonify({'message': 'Agent created', 'agent_id': new_agent.agent_id}), 200
 
 
-@api.route('/agents/list')
+@database_bp.route('/agents/list')
 def list_agents():
     """ get all agents
     ### args
@@ -160,7 +159,7 @@ def list_agents():
     return jsonify(result), 200
 
 
-@api.route('/agents/delete/<agent_id>/')
+@database_bp.route('/agents/delete/<agent_id>/')
 def delete_agent(agent_id):
     """ delete agent by id
     ### args
@@ -184,7 +183,7 @@ def delete_agent(agent_id):
     return jsonify({'message': 'Agent deleted'}), 200
 
 
-@api.route('/agents/get/<agent_id>/')
+@database_bp.route('/agents/get/<agent_id>/')
 def get_agent(agent_id):
     """ get agent by id
     ### args
@@ -220,7 +219,8 @@ def get_agent(agent_id):
         return 'Error', 500
     return jsonify(result), 200
 
-@api.route('/agents/update', methods=['post'])
+
+@database_bp.route('/agents/update', methods=['post'])
 def update_agent():
     """
     ## args
@@ -255,7 +255,9 @@ def update_agent():
         print(e)
         return 'Error', 500
     return jsonify({'message': 'Agent updated', 'agent_id': agent_id}), 200
-@api.route('/agent_tools/add', methods=['post'])
+
+
+@database_bp.route('/agent_tools/add', methods=['post'])
 def add_agent_tools():
     """
     ## args
@@ -288,7 +290,7 @@ def add_agent_tools():
     return jsonify({'message': 'tools created', 'agent_id': agent_id}), 200
 
 
-@api.route('/agent_tools/get/<agent_id>/', methods=['GET'])
+@database_bp.route('/agent_tools/get/<agent_id>/', methods=['GET'])
 def get_agent_tools(agent_id):
     """ get  agent tools by agent_id
     ### args
@@ -320,7 +322,7 @@ def get_agent_tools(agent_id):
     return jsonify(result), 200
 
 
-@api.route('/agent_tools/delete/<agent_id>/', methods=['post'])
+@database_bp.route('/agent_tools/delete/<agent_id>/', methods=['post'])
 def delete_agent_tools(agent_id):
     """ delete agent tools by agent_id
     ### args
@@ -345,7 +347,7 @@ def delete_agent_tools(agent_id):
 
 
 # 获取所有工具（包含预定义和用户自定义）
-@api.route('/tools/list', methods=['GET'])
+@database_bp.route('/tools/list', methods=['GET'])
 def get_tools():
     """ get all tools
     ### args
@@ -378,7 +380,7 @@ def get_tools():
 
 
 # 用户自定义工具上传（工具文件以 Python 文件或者粘贴python 代码形式上传）
-@api.route('/tools/add', methods=['POST'])
+@database_bp.route('/tools/add', methods=['POST'])
 def add_tool():
     """ Content-Type=form-data
     ### args
@@ -436,7 +438,7 @@ def add_tool():
     return jsonify({'message': 'Tool created', 'tool_id': new_tool.tool_id, 'file_path': file_path}), 200
 
 
-@api.route('/tools/delete/<tool_id>', methods=['POST'])
+@database_bp.route('/tools/delete/<tool_id>', methods=['POST'])
 def delete_tool(tool_id):
     """
     ### args
@@ -464,7 +466,7 @@ def delete_tool(tool_id):
 
 
 # 获取大模型列表
-@api.route('/llms/list', methods=['GET'])
+@database_bp.route('/llms/list', methods=['GET'])
 def list_llm():
     """ get all llms
     ### args
@@ -497,9 +499,9 @@ def list_llm():
 
 
 # 创建大模型（支持用户自定义）
-@api.route('/llm/add', methods=['POST'])
+@database_bp.route('/llm/add', methods=['POST'])
 def add_llm():
-    """ Content-Type=form-data
+    """
     ### args
     |  args | required | request type | type |  remarks |
     |-------|----------|--------------|------|----------|
@@ -532,7 +534,7 @@ def add_llm():
 
 
 # 用户文件上传接口（图片、CSV、其他文件）
-@api.route('/files/upload', methods=['POST'])
+@database_bp.route('/files/upload', methods=['POST'])
 def upload_file():
     """ Content-Type=form-data
     ### args
@@ -569,7 +571,139 @@ def upload_file():
         return jsonify({'error': 'No file uploaded'}), 400
 
 
-app.register_blueprint(api, url_prefix='/v1')
+@database_bp.route('/conversations/list', methods=['POST'])
+def list_conversations():
+    """
+    ### request
+    ```json
+    {"user_id": 1}
+    ```
+    ### return
+    ```json
+    [
+    {
+    "conversation_id": xxx,
+    "user_id": xxx,
+    "agent_id": xxx,
+    "conversation_name": "xxx",
+    'create_time':"xxx",
+    'update_time':"xxx"
+    }
+    ]
+    """
+    db = DBSession()
+    data = request.get_json()
+    # user_id = data.get('user_id')
+    user_id = 1
+    conversations = db.query(Conversations).filter(Conversations.user_id == user_id).all()
+    result = []
+    for conversation in conversations:
+        result.append({
+            'conversation_id': conversation.conversation_id,
+            'user_id': conversation.user_id,
+            'agent_id': conversation.agent_id,
+            'conversation_name': conversation.conversation_name,
+            'create_time': conversation.create_time,
+            'update_time': conversation.update_time
+        })
+    return jsonify(result)
+
+
+@database_bp.route('/conversations/add', methods=['POST'])
+def add_conversation():
+    """
+    ### args
+    |  args | required | request type | type |  remarks |
+    |-------|----------|--------------|------|----------|
+    | conversation_name  |  true    |    body      | str  | conversation name |
+    | agent_id |  true    |    body      | str  | agent id |
+    ### request
+    ```json
+    { "conversation_name": "xxx", "agent_id": "xxx"}
+    ```
+    ### return
+    ```json
+    {"message": "Conversation created", "conversation_id": 1}
+    ```
+    """
+    db = DBSession()
+    data = request.get_json()
+    conversation_name = data.get('conversation_name')
+    agent_id = data.get('agent_id')
+    new_conversation = Conversations(user_id=1, agent_id=agent_id, conversation_name=conversation_name)
+    try:
+        db.add(new_conversation)
+        db.commit()
+    except SQLAlchemyError as e:
+        db.rollback()
+        print(e)
+        return 'error', 400
+    return jsonify({'message': 'Conversation created', 'conversation_id': new_conversation.conversation_id}), 200
+
+
+@database_bp.route('/conversations/delete/<conversation_id>/', methods=['POST'])
+def delete_conversation(conversation_id):
+    """
+    ###args
+    |  args | required | request type | type |  remarks |
+    |-------|----------|--------------|------|----------|
+    | conversation_id  |  true    |    body      | str  | conversation id |
+    ### return
+    ```json
+    {"message": "Conversation deleted"}
+    """
+    db = DBSession()
+    conversation = db.query(Conversations).filter(Conversations.conversation_id == conversation_id).first()
+    if conversation:
+        db.delete(conversation)
+        db.commit()
+        return jsonify({'message': 'Conversation deleted'})
+    else:
+        return jsonify({'error': 'Conversation not found'}), 404
+
+
+@database_bp.route('/conversations/get/<conversation_id>/', methods=['GET'])
+def get_conversation(conversation_id):
+    """return messages
+    ###args
+    |  args | required | request type | type |  remarks |
+    |-------|----------|--------------|------|----------|
+    | conversation_id  |  true    |    body      | str  | conversation id |
+    ### return
+    ```json
+    [
+    {
+    "message_id": xxx,
+    "conversation_id": xxx,
+    "user_id": xxx,
+    "agent_id": xxx,
+    "user_content":"xxx",
+    "agent_content": "xxx",
+     "create_time":"xxx"
+     }
+     ]
+     """
+    db = DBSession()
+    conversation = db.query(Conversations).filter(Conversations.conversation_id == conversation_id).first()
+    if conversation:
+        messages = db.query(Messages).filter(Messages.conversation_id == conversation_id).all()
+        result = []
+        for message in messages:
+            result.append({
+                'message_id': message.message_id,
+                'conversation_id': message.conversation_id,
+                'user_id': message.user_id,
+                'agent_id': message.agent_id,
+                'user_content': message.user_content,
+                'agent_content': message.agent_content,
+                'create_time': message.create_time
+            })
+        return jsonify(result)
+    return jsonify({'error': 'Conversation not found'}), 404
+
+
+app.register_blueprint(database_bp, url_prefix='/v1')
+app.register_blueprint(conversation_bp, url_prefix='/v1')
 
 # ------------------------
 # 启动程序

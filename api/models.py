@@ -1,10 +1,13 @@
 from typing import List, Optional
 
 from sqlalchemy import Column, DateTime, ForeignKeyConstraint, Index, Integer, String, Table, Text, text
-from sqlalchemy.orm import Mapped, mapped_column, relationship,DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 import datetime
+
 class Base(DeclarativeBase):
     pass
+
+
 class Llms(Base):
     __tablename__ = 'llms'
 
@@ -30,7 +33,10 @@ class Users(Base):
     charts: Mapped[List['Charts']] = relationship('Charts', back_populates='user')
     files: Mapped[List['Files']] = relationship('Files', back_populates='user')
     logs: Mapped[List['Logs']] = relationship('Logs', back_populates='user')
+    rag_docs: Mapped[List['RagDocs']] = relationship('RagDocs', back_populates='user')
     tools: Mapped[List['Tools']] = relationship('Tools', back_populates='user')
+    conversations: Mapped[List['Conversations']] = relationship('Conversations', back_populates='user')
+    messages: Mapped[List['Messages']] = relationship('Messages', back_populates='user')
 
 
 class Agents(Base):
@@ -49,6 +55,9 @@ class Agents(Base):
 
     llm: Mapped['Llms'] = relationship('Llms', back_populates='agents')
     tool: Mapped[List['Tools']] = relationship('Tools', secondary='agent_tools', back_populates='agent')
+    agent_pakages: Mapped[List['AgentPakages']] = relationship('AgentPakages', back_populates='agent')
+    conversations: Mapped[List['Conversations']] = relationship('Conversations', back_populates='agent')
+    messages: Mapped[List['Messages']] = relationship('Messages', back_populates='agent')
 
 
 class Charts(Base):
@@ -81,6 +90,7 @@ class Files(Base):
     upload_time: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
 
     user: Mapped['Users'] = relationship('Users', back_populates='files')
+    message: Mapped[List['Messages']] = relationship('Messages', secondary='message_files', back_populates='file')
 
 
 class Logs(Base):
@@ -96,6 +106,22 @@ class Logs(Base):
     operation_time: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
 
     user: Mapped['Users'] = relationship('Users', back_populates='logs')
+
+
+class RagDocs(Base):
+    __tablename__ = 'rag_docs'
+    __table_args__ = (
+        ForeignKeyConstraint(['user_id'], ['users.user_id'], name='rag_docs_ibfk_1'),
+        Index('user_id', 'user_id')
+    )
+
+    doc_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer)
+    doc_name: Mapped[str] = mapped_column(String(255))
+    doc_path: Mapped[str] = mapped_column(String(255))
+    create_time: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+
+    user: Mapped['Users'] = relationship('Users', back_populates='rag_docs')
 
 
 class Tools(Base):
@@ -117,6 +143,18 @@ class Tools(Base):
     user: Mapped['Users'] = relationship('Users', back_populates='tools')
 
 
+class AgentPakages(Base):
+    __tablename__ = 'agent_pakages'
+    __table_args__ = (
+        ForeignKeyConstraint(['agent_id'], ['agents.agent_id'], name='agent_pakages_ibfk_1'),
+    )
+
+    agent_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    pakage_name: Mapped[str] = mapped_column(String(255), primary_key=True)
+
+    agent: Mapped['Agents'] = relationship('Agents', back_populates='agent_pakages')
+
+
 t_agent_tools = Table(
     'agent_tools', Base.metadata,
     Column('agent_id', Integer, primary_key=True, nullable=False),
@@ -124,4 +162,60 @@ t_agent_tools = Table(
     ForeignKeyConstraint(['agent_id'], ['agents.agent_id'], name='agent_tools_ibfk_1'),
     ForeignKeyConstraint(['tool_id'], ['tools.tool_id'], name='agent_tools_ibfk_2'),
     Index('tool_id', 'tool_id')
+)
+
+
+class Conversations(Base):
+    __tablename__ = 'conversations'
+    __table_args__ = (
+        ForeignKeyConstraint(['agent_id'], ['agents.agent_id'], name='conversations_ibfk_2'),
+        ForeignKeyConstraint(['user_id'], ['users.user_id'], name='conversations_ibfk_1'),
+        Index('agent_id', 'agent_id'),
+        Index('user_id', 'user_id')
+    )
+
+    conversation_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer)
+    agent_id: Mapped[int] = mapped_column(Integer)
+    conversation_name: Mapped[str] = mapped_column(String(255))
+    create_time: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    update_time: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    agent: Mapped['Agents'] = relationship('Agents', back_populates='conversations')
+    user: Mapped['Users'] = relationship('Users', back_populates='conversations')
+    messages: Mapped[List['Messages']] = relationship('Messages', back_populates='conversation')
+
+
+class Messages(Base):
+    __tablename__ = 'messages'
+    __table_args__ = (
+        ForeignKeyConstraint(['agent_id'], ['agents.agent_id'], name='messages_ibfk_3'),
+        ForeignKeyConstraint(['conversation_id'], ['conversations.conversation_id'], name='messages_ibfk_1'),
+        ForeignKeyConstraint(['user_id'], ['users.user_id'], name='messages_ibfk_2'),
+        Index('agent_id', 'agent_id'),
+        Index('conversation_id', 'conversation_id'),
+        Index('user_id', 'user_id')
+    )
+
+    message_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    conversation_id: Mapped[int] = mapped_column(Integer)
+    user_id: Mapped[int] = mapped_column(Integer)
+    agent_id: Mapped[int] = mapped_column(Integer)
+    agent_content: Mapped[str] = mapped_column(Text)
+    user_content: Mapped[str] = mapped_column(Text)
+    create_time: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+
+    file: Mapped[List['Files']] = relationship('Files', secondary='message_files', back_populates='message')
+    agent: Mapped['Agents'] = relationship('Agents', back_populates='messages')
+    conversation: Mapped['Conversations'] = relationship('Conversations', back_populates='messages')
+    user: Mapped['Users'] = relationship('Users', back_populates='messages')
+
+
+t_message_files = Table(
+    'message_files', Base.metadata,
+    Column('file_id', Integer, primary_key=True, nullable=False),
+    Column('message_id', Integer, primary_key=True, nullable=False),
+    ForeignKeyConstraint(['file_id'], ['files.file_id'], name='message_files_ibfk_1'),
+    ForeignKeyConstraint(['message_id'], ['messages.message_id'], name='message_files_ibfk_2'),
+    Index('message_id', 'message_id')
 )
