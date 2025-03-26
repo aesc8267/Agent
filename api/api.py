@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, blueprints
+import requests
 import os
 from models import *
 from sqlalchemy.orm import sessionmaker
@@ -12,6 +13,7 @@ app.config['UPLOAD_FOLDER'] = './uploads'
 CORS(app, origins='*')
 engine = create_engine('mysql+pymysql://root:root@localhost/agent')
 DBSession = sessionmaker(bind=engine)
+session=requests.Session()
 # 自动生成请求参数 markdown
 # app.config["API_DOC_AUTO_GENERATING_ARGS_MD"] = True
 # # 允许显示的方法
@@ -704,6 +706,16 @@ def get_conversation(conversation_id):
 
 app.register_blueprint(database_bp, url_prefix='/v1')
 app.register_blueprint(conversation_bp, url_prefix='/v1')
+@conversation_bp.route("/conversation/load")
+@conversation_bp.route("/ask",methods=['POST'])
+def ask():
+    data=request.get_json()
+    api_key=data.get('api_key')
+    base_url=data.get('base_url')
+    steps_memory=data.get('steps_memory')
+    db=DBSession()
+    agent=db.query(Agents).filter(Agents.agent_id==agent_id).first()
+
 
 # ------------------------
 # 启动程序
