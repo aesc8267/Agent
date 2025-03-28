@@ -1,57 +1,47 @@
-import pandas as pd                                                                                              
-import matplotlib.pyplot as plt                                                                                  
-import seaborn as sns                                                                                            
-import os                                                                                                        
-from sklearn.linear_model import LinearRegression                                                                
-from sklearn.model_selection import train_test_split                                                             
-from sklearn.metrics import mean_squared_error                                                                   
-                                                                                                                
-# 加载数据                                                                                                       
-data_path = '/Users/esca/Desktop/Agent/data/anime-dataset-2023.csv'                                              
-data = pd.read_csv(data_path)                                                                                    
-                                                                                                                
-# 保存输出目录                                                                                                   
-output_dir = './outputs'                                                                                         
-if not os.path.exists(output_dir):                                                                               
-    os.makedirs(output_dir)                                                                                      
-                                                                                                                
-# 分析Score的影响因素                                                                                            
-# 选择数值型特征进行分析                                                                                         
-numeric_features = ['Popularity', 'Favorites', 'Members', 'Scored By']                                           
-X = data[numeric_features]                                                                                       
-y = data['Score']                                                                                                
-                                                                                                                
-# 检查缺失值                                                                                                     
-print("数值型特征的缺失值统计:")                                                                                 
-print(X.isnull().sum())                                                                                          
-                                                                                                                
-# 填充缺失值（如果有）                                                                                           
-X = X.fillna(X.mean())                                                                                           
-                                                                                                                
-# 划分训练集和测试集                                                                                             
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)                        
-                                                                                                                
-# 训练线性回归模型                                                                                               
-model = LinearRegression()                                                                                       
-model.fit(X_train, y_train)                                                                                      
-                                                                                                                
-# 预测与评估                                                                                                     
-y_pred = model.predict(X_test)                                                                                   
-mse = mean_squared_error(y_test, y_pred)                                                                         
-print(f"线性回归模型的均方误差 (MSE): {mse}")                                                                    
-                                                                                                                
-# 保存模型系数                                                                                                   
-coefficients = pd.Series(model.coef_, index=numeric_features)                                                    
-print("模型系数:")                                                                                               
-print(coefficients)                                                                                              
-                                                                                                                
-# 绘制特征重要性图                                                                                               
-plt.figure(figsize=(10, 6))                                                                                      
-sns.barplot(x=coefficients.index, y=coefficients.values, palette='viridis')                                      
-plt.title('特征对Score的影响')                                                                                   
-plt.xlabel('特征')                                                                                               
-plt.ylabel('系数')                                                                                               
-plt.savefig(f'{output_dir}/feature_importance.png')                                                              
-plt.close()                                                                                                      
-                                                                                                                
-print("已保存特征重要性图到 outputs/feature_importance.png")    
+from flask import Flask, Response
+import time
+from flask_cors import CORS
+from smolagents.agents import CodeAgent
+# 知识检索 agent
+from smolagents import CodeAgent, OpenAIServerModel, tool, HfApiModel, DuckDuckGoSearchTool
+from tools.final_answer import FinalAnswerTool
+from tools.visit_webpage import VisitWebpageTool
+from tools.vision_comprehension import VisionComprehension
+from tools.file_io import file_writer
+
+model = OpenAIServerModel(model_id='qwen-max', api_base="https://dashscope.aliyuncs.com/compatible-mode/v1",
+                          api_key="sk-615616fb539749dda57c80cc0928669d")
+# model = HfApiModel(model_id="Qwen/Qwen2.5-Coder-32B-Instruct", provider="together")
+agent = CodeAgent(model=model,
+                  tools=[DuckDuckGoSearchTool(), file_writer(), VisitWebpageTool()],
+                  additional_authorized_imports=['flask', 'os', 'matplotlib', 'pandas', 'numpy', 'seaborn', 'sklearn',
+                                                 'torch', 'transformers', 'tensorflow', 'keras', 'cv2', 'PIL',
+                                                 'matplotlib.pyplot', 'matplotlib.pyplot as plt', 'pandas as pd',
+                                                 'numpy as np', 'seaborn as sns', 'sklearn as sk', 'torch as torch',
+                                                 'transformers as transformers', 'tensorflow as tf', 'keras as keras',
+                                                 'cv2 as cv2', 'PIL as PIL', 'matplotlib.pyplot as plt',
+                                                 'matplotlib.pyplot as plt', 'pandas as pd', 'numpy as np',
+                                                 'seaborn as sns', 'sklearn as sk', 'torch as torch',
+                                                 'transformers as transformers', 'tensorflow as tf', 'keras as keras',
+                                                 'cv2 as cv2', 'PIL as PIL'],
+                  name='qwen_agent',
+                  description='information extraction agent,can do rag and web search')
+app = Flask(__name__)
+CORS(app, origins='*')
+
+
+def generate(task: str):
+    chunks = agent.run(task, stream=True, reset=False)
+    start = time.time()
+    for chunk in chunks:
+        yield chunk
+
+
+@app.route('/events')
+def events():
+    task = "请从互联网上搜集，和东华大学有关的信息，帮我整理出来"
+    return Response(generate(task), mimetype='text/event-stream')
+
+
+if __name__ == '__main__':
+    app.run(debug=True)

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SSE 示例</title>
+</head>
+<body>
+    <h1>Server-Sent Events 演示</h1>
+    <div id="messages"></div>
+
+    <script>
+        const eventSource = new EventSource('http://127.0.0.1:5000/events');
+        const messagesDiv = document.getElementById('messages');
+
+        eventSource.onmessage = function(event) {
+            const newElement = document.createElement("p");
+            newElement.textContent = event.data;
+            messagesDiv.appendChild(newElement);
+        };
+
+        eventSource.onerror = function() {
+            console.error("连接失败");
+            eventSource.close();
+        };
+    </script>
+</body>
+</html>
